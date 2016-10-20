@@ -1,0 +1,85 @@
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'checkstyle'
+apply plugin: 'findbugs'
+apply plugin: 'project-report'
+
+assert (JavaVersion.current().isJava8() || JavaVersion.current().isJava8Compatible())
+
+jar {
+    baseName = 'gs-spring-boot'
+    version =  '0.1.0'
+}
+
+repositories {
+    mavenCentral()
+    flatDir {
+       dirs 'libs'
+   	}
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+	compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile("junit:junit")
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+    }
+}
+
+checkstyle {
+	ignoreFailures = false
+	configFile = "${project.buildDir}/../../config/checkstyle/checkstyle.xml" as File
+}
+
+findbugs {
+	sourceSets = [sourceSets.main]
+	includeFilter = file("${project.buildDir}/../../config/findbugs.xml")
+	reportsDir = file("$project.buildDir/reports/findbugs")
+  	effort = "max"
+}
+
+tasks.withType(FindBugs) {
+  	ignoreFailures = false
+  	reports {
+        xml.enabled = false
+        xml.withMessages = true
+        html.enabled = !xml.isEnabled()
+        xml.destination "$project.buildDir/reports/findbugs/findbugs-output.xml"
+        html.destination "$project.buildDir/reports/findbugs/findbugs-output.html"
+    }
+}
+
+
+task runPassive(type:JavaExec) {
+	if (project.hasProperty('myargs')) {
+      args(myargs.split(','))
+  	}
+	
+   	classpath = sourceSets.main.runtimeClasspath
+  	main = "PercolationVisualizer"
+}
+
+task runInteractive(type:JavaExec) {
+	if (project.hasProperty('myargs')) {
+      args(myargs.split(','))
+  	}
+	
+   	classpath = sourceSets.main.runtimeClasspath
+  	main = "InteractivePercolationVisualizer"
+}
+
+task runPS(type:JavaExec) {
+    args '100','100000'
+   	classpath = sourceSets.main.runtimeClasspath
+  	main = "PercolationStats"
+}
